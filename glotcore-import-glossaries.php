@@ -42,6 +42,7 @@ define( 'GC_IG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 function gp_init() {
 	global $glotcore_importglossaries;
 
+	require_once __DIR__ . '/src/class-data.php';
 	require_once __DIR__ . '/src/class-admin-page.php';
 	require_once __DIR__ . '/src/class-importer.php';
 

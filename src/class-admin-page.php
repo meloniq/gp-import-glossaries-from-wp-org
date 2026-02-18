@@ -75,8 +75,8 @@ class Admin_Page {
 	protected function render_glossary_import_section(): void {
 		$available_locales = Importer::get_supported_locales();
 		?>
-		<h2><?php esc_html_e( 'Import Glossary from WordPress.org', 'glotcore-import-glossaries' ); ?></h2>
-		<p><?php esc_html_e( 'Import glossary entries from translate.wordpress.org for a specific locale.', 'glotcore-import-glossaries' ); ?></p>
+		<h2><?php esc_html_e( 'Import Glossaries from WordPress.org', 'glotcore-import-glossaries' ); ?></h2>
+		<p><?php esc_html_e( 'Import glossaries from translate.wordpress.org for a specific locales.', 'glotcore-import-glossaries' ); ?></p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="gc_ig_import_glossary">
@@ -85,33 +85,58 @@ class Admin_Page {
 			<table class="form-table">
 				<tr>
 					<th scope="row">
-						<label for="import_locale"><?php esc_html_e( 'Locale', 'glotcore-import-glossaries' ); ?></label>
+						<label for="import_locales"><?php esc_html_e( 'Locales', 'glotcore-import-glossaries' ); ?></label>
 					</th>
-					<td>
-						<select name="import_locale" id="import_locale">
-							<?php foreach ( $available_locales as $locale_slug => $locale_name ) { ?>
-								<option value="<?php echo esc_attr( $locale_slug ); ?>"><?php echo esc_html( $locale_name ); ?></option>
-							<?php } ?>
-						</select>
-						<?php
-						$import_times = get_option( 'gc_ig_glossary_import_times', array() );
-						if ( ! empty( $import_times ) ) {
-							echo '<p class="description">';
-							esc_html_e( 'Last imports:', 'glotcore-import-glossaries' );
-							echo '<br>';
-							foreach ( $import_times as $locale => $timestamp ) {
-								$locale_name = $available_locales[ $locale ] ?? $locale;
-								echo esc_html( $locale_name ) . ': ' . esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp ) ) . '<br>';
-							}
-							echo '</p>';
-						}
-						?>
+					<td class="import-locales-checkboxes">
+					<?php foreach ( $available_locales as $locale_slug => $locale_name ) { ?>
+						<label for="import_locales_<?php echo esc_attr( $locale_slug ); ?>">
+							<input type="checkbox" value="<?php echo esc_attr( $locale_slug ); ?>" name="import_locales[]" id="import_locales_<?php echo esc_attr( $locale_slug ); ?>">
+							<?php echo esc_html( $locale_name ); ?><span> (<?php echo esc_html( $locale_slug ); ?>)</span>
+						</label>
+					<?php } ?>
 					</td>
 				</tr>
 			</table>
 
 			<?php submit_button( __( 'Import Glossary', 'glotcore-import-glossaries' ), 'secondary' ); ?>
 		</form>
+
+		<table class="form-table">
+			<tr>
+				<th scope="row">
+					<label for="import_locale"><?php esc_html_e( 'Last imports', 'glotcore-import-glossaries' ); ?></label>
+				</th>
+				<td>
+					<p class="description">
+					<?php
+					$import_times = get_option( 'gc_ig_glossary_import_times', array() );
+					if ( ! empty( $import_times ) ) {
+						foreach ( $import_times as $locale => $timestamp ) {
+							$locale_name     = $available_locales[ $locale ] ?? $locale;
+							$datetime_format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+							echo esc_html( $locale_name ) . ': ' . esc_html( date_i18n( $datetime_format, $timestamp ) ) . '<br>';
+						}
+					}
+					?>
+					</p>
+				</td>
+			</tr>
+		</table>
+		<style>
+			.import-locales-checkboxes label {
+				width: 33%;
+				display: inline-block;
+			}
+			.import-locales-checkboxes label span {
+				font-size: 0.8em;
+				opacity: 0.7;
+			}
+			@media screen and (max-width: 782px) {
+				.import-locales-checkboxes label {
+					line-height: 2.3;
+				}
+			}
+		</style>
 		<?php
 	}
 
@@ -131,25 +156,30 @@ class Admin_Page {
 			wp_die( esc_html__( 'You do not have permission to perform this action.', 'glotcore-import-glossaries' ) );
 		}
 
-		$locale = isset( $_POST['import_locale'] ) ? sanitize_text_field( wp_unslash( $_POST['import_locale'] ) ) : '';
+		$locales = isset( $_POST['import_locales'] ) ? wp_unslash( $_POST['import_locales'] ) : array(); // phpcs:ignore
+		$locales = array_map( 'sanitize_text_field', $locales );
 
-		if ( empty( $locale ) ) {
-			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'missing_locale', admin_url( 'options-general.php?page=glotcore-import-glossaries' ) ) );
+		if ( empty( $locales ) ) {
+			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'missing_locales', admin_url( 'options-general.php?page=glotcore-import-glossaries' ) ) );
 			exit;
 		}
 
-		$imported = Importer::import_from_wporg( $locale );
+		$imported = Importer::import_locales( $locales );
 
-		if ( -1 === $imported ) {
+		// Check for import error.
+		// If any locale returned -1, consider the entire import as failed.
+		if ( in_array( -1, $imported, true ) ) {
 			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'import_failed', admin_url( 'options-general.php?page=glotcore-import-glossaries' ) ) );
 			exit;
 		}
+
+		$import_count = array_sum( $imported );
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'gc_ig_success'  => 'glossary_imported',
-					'gc_ig_imported' => $imported,
+					'gc_ig_imported' => $import_count,
 				),
 				admin_url( 'options-general.php?page=glotcore-import-glossaries' )
 			)
@@ -192,8 +222,8 @@ class Admin_Page {
 			$error = sanitize_text_field( wp_unslash( $_GET['gc_ig_error'] ) );
 
 			$messages = array(
-				'missing_locale' => __( 'Please select a locale.', 'glotcore-import-glossaries' ),
-				'import_failed'  => __( 'Glossary import failed. GlotPress glossary classes may not be available.', 'glotcore-import-glossaries' ),
+				'missing_locales' => __( 'Please select locales.', 'glotcore-import-glossaries' ),
+				'import_failed'   => __( 'Glossary import failed. GlotPress glossary classes may not be available.', 'glotcore-import-glossaries' ),
 			);
 
 			$message = $messages[ $error ] ?? __( 'An error occurred.', 'glotcore-import-glossaries' );

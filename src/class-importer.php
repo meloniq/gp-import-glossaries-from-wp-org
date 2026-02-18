@@ -18,36 +18,50 @@ use GP_Locales;
 class Importer {
 
 	/**
-	 * Transient prefix for caching.
-	 *
-	 * @var string
-	 */
-	const TRANSIENT_PREFIX = 'gc_ig_glossary_';
-
-	/**
-	 * Cache expiry in seconds (24 hours).
-	 *
-	 * @var int
-	 */
-	const CACHE_EXPIRY = DAY_IN_SECONDS;
-
-	/**
 	 * Get the supported locales with names.
 	 *
 	 * @return array Associative array of locale slug => locale name.
 	 */
 	public static function get_supported_locales(): array {
-		// Todo: This could be dynamic in future.
-		$locale_names = array(
-			'af' => 'Afrikaans',
-			'ar' => 'Arabic',
-			'hy' => 'Armenian',
-			'az' => 'Azerbaijani',
-			'be' => 'Belarusian',
-			'cy' => 'Welsh',
-		);
+		$glotpress_locales = GP_Locales::locales();
+		$wporg_locales     = Data::get_wporg_locales();
 
-		return $locale_names;
+		$supported_locales = array();
+		foreach ( $glotpress_locales as $locale ) {
+			// Skip locales that don't have a WordPress locale mapping.
+			if ( empty( $locale->wp_locale ) ) {
+				continue;
+			}
+
+			// Only include locales that have a mapping to WordPress.org.
+			if ( ! in_array( $locale->slug, $wporg_locales, true ) ) {
+				continue;
+			}
+
+			$supported_locales[ $locale->slug ] = $locale->english_name;
+		}
+
+		// Sort by english name.
+		asort( $supported_locales );
+
+		return $supported_locales;
+	}
+
+	/**
+	 * Import locales.
+	 *
+	 * @param array $locales Array of locale slugs to import.
+	 *
+	 * @return array Associative array of locale slug => import result (number of entries or error code).
+	 */
+	public static function import_locales( array $locales ): array {
+		$results = array();
+
+		foreach ( $locales as $locale ) {
+			$results[ $locale ] = self::import_from_wporg( $locale );
+		}
+
+		return $results;
 	}
 
 	/**
@@ -61,11 +75,6 @@ class Importer {
 	 * @return int Number of entries imported, or -1 on error.
 	 */
 	public static function import_from_wporg( string $locale ): int {
-		// Require GlotPress.
-		if ( ! class_exists( 'GP' ) || ! class_exists( 'GP_Glossary' ) || ! class_exists( 'GP_Glossary_Entry' ) ) {
-			return -1;
-		}
-
 		// Find or create a glossary for this locale.
 		$glossary = self::get_or_create_glossary_for_locale( $locale );
 		if ( ! $glossary ) {
@@ -85,9 +94,6 @@ class Importer {
 		$imported = self::import_csv_to_glossary( $tmp_file, $glossary->id, $locale );
 
 		unlink( $tmp_file );
-
-		// Clear cache for this locale.
-		delete_transient( self::TRANSIENT_PREFIX . $locale );
 
 		// Update last import timestamp.
 		$import_times            = get_option( 'gc_ig_glossary_import_times', array() );
@@ -117,7 +123,7 @@ class Importer {
 		$imported = 0;
 
 		// Read and validate header.
-		$header = fgetcsv( $f, 0, ',' );
+		$header = fgetcsv( $f, 0, ',', '"', '' );
 		if ( ! is_array( $header ) || count( $header ) < 2 ) {
 			fclose( $f );
 			return 0;
@@ -139,7 +145,7 @@ class Importer {
 		// WordPress.org CSV header is: en, <locale>, pos, description.
 		// GlotPress validates that header[1] matches locale slug.
 
-		while ( ( $data = fgetcsv( $f, 0, ',' ) ) !== false ) {
+		while ( ( $data = fgetcsv( $f, 0, ',', '"', '' ) ) !== false ) {
 			if ( count( $data ) < 4 ) {
 				continue;
 			}
@@ -307,23 +313,21 @@ class Importer {
 	 * @return GP_Glossary|null The glossary object or null on failure.
 	 */
 	protected static function get_or_create_glossary_for_locale( string $locale ) {
-		// Find translation sets for this locale.
-		$translation_sets = GP::$translation_set->find_many( array( 'locale' => $locale ) );
+		// Use project_id = 0 for locale-level glossary (GlotPress convention).
+		// This is the glossary shown at /languages/{locale}/default/glossary/.
+		$translation_set = GP::$translation_set->by_project_id_slug_and_locale( 0, 'default', $locale );
 
-		if ( empty( $translation_sets ) ) {
+		if ( ! $translation_set ) {
 			return null;
 		}
 
-		// Use the first translation set (typically the main/default one).
-		$translation_set = $translation_sets[0];
-
-		// Check for existing glossary using GlotPress native method.
+		// Check for existing glossary.
 		$glossary = GP::$glossary->by_set_id( $translation_set->id );
 		if ( $glossary ) {
 			return $glossary;
 		}
 
-		// Create a new glossary for this translation set.
+		// Create a new glossary for this locale translation set.
 		return GP::$glossary->create(
 			array(
 				'translation_set_id' => $translation_set->id,
@@ -342,39 +346,5 @@ class Importer {
 		$import_times = get_option( 'gc_ig_glossary_import_times', array() );
 
 		return $import_times[ $locale ] ?? null;
-	}
-
-	/**
-	 * Clear the glossary cache for a specific locale.
-	 *
-	 * @param string $locale The locale slug.
-	 *
-	 * @return void
-	 */
-	public static function clear_cache( string $locale ): void {
-		delete_transient( self::TRANSIENT_PREFIX . $locale );
-	}
-
-	/**
-	 * Clear all glossary caches.
-	 *
-	 * @return void
-	 */
-	public static function clear_all_caches(): void {
-		global $wpdb;
-
-		$wpdb->query( // phpcs:ignore
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-				'_transient_' . self::TRANSIENT_PREFIX . '%'
-			)
-		);
-
-		$wpdb->query( // phpcs:ignore
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-				'_transient_timeout_' . self::TRANSIENT_PREFIX . '%'
-			)
-		);
 	}
 }
