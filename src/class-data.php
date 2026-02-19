@@ -7,6 +7,11 @@
 
 namespace GlotCore\ImportGlossaries;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Class Data.
  */
