@@ -74,12 +74,18 @@ class Admin_Page {
 						<label for="import_locales"><?php esc_html_e( 'Locales', 'glotcore-import-glossaries' ); ?></label>
 					</th>
 					<td class="import-locales-checkboxes">
-					<?php foreach ( $available_locales as $locale_slug => $locale_name ) { ?>
-						<label for="import_locales_<?php echo esc_attr( $locale_slug ); ?>">
-							<input type="checkbox" value="<?php echo esc_attr( $locale_slug ); ?>" name="import_locales[]" id="import_locales_<?php echo esc_attr( $locale_slug ); ?>">
-							<?php echo esc_html( $locale_name ); ?><span> (<?php echo esc_html( $locale_slug ); ?>)</span>
+						<hr>
+						<?php foreach ( $available_locales as $locale_slug => $locale_name ) { ?>
+							<label for="import_locales_<?php echo esc_attr( $locale_slug ); ?>">
+								<input type="checkbox" value="<?php echo esc_attr( $locale_slug ); ?>" name="import_locales[]" id="import_locales_<?php echo esc_attr( $locale_slug ); ?>">
+								<?php echo esc_html( $locale_name ); ?><span> (<?php echo esc_html( $locale_slug ); ?>)</span>
+							</label>
+						<?php } ?>
+						<hr>
+						<label for="import_locales_all">
+							<input type="checkbox" id="import_locales_all">
+							<?php esc_html_e( 'Select All', 'glotcore-import-glossaries' ); ?>
 						</label>
-					<?php } ?>
 					</td>
 				</tr>
 			</table>
@@ -123,6 +129,12 @@ class Admin_Page {
 				}
 			}
 		</style>
+		<script>
+			document.getElementById('import_locales_all').addEventListener('change', function() {
+				const checkboxes = document.querySelectorAll('input[name="import_locales[]"]');
+				checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+			});
+		</script>
 		<?php
 	}
 
