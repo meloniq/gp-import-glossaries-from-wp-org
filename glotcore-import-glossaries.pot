@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GlotCore Import Glossaries\n"
-"POT-Creation-Date: 2026-01-31 15:14+0100\n"
+"POT-Creation-Date: 2026-02-19 17:38+0100\n"
 "PO-Revision-Date: 2026-01-31 11:59+0100\n"
 "Last-Translator: MELONIQ.NET\n"
 "Language-Team: MELONIQ.NET\n"
@@ -16,3 +16,60 @@ msgstr ""
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-SearchPath-0: .\n"
+
+#: src/class-admin-page.php:46 src/class-admin-page.php:47
+msgid "GlotCore Import Glossaries"
+msgstr ""
+
+#: src/class-admin-page.php:62
+msgid "GlotCore Import Glossaries from wordpress.org"
+msgstr ""
+
+#: src/class-admin-page.php:76
+msgid "Import Glossaries from WordPress.org"
+msgstr ""
+
+#: src/class-admin-page.php:77
+msgid "Import glossaries from translate.wordpress.org for a specific locales."
+msgstr ""
+
+#: src/class-admin-page.php:86
+msgid "Locales"
+msgstr ""
+
+#: src/class-admin-page.php:99
+msgid "Select All"
+msgstr ""
+
+#: src/class-admin-page.php:105
+msgid "Import Glossary"
+msgstr ""
+
+#: src/class-admin-page.php:111
+msgid "Last imports"
+msgstr ""
+
+#: src/class-admin-page.php:161
+msgid "Security check failed."
+msgstr ""
+
+#: src/class-admin-page.php:166
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: src/class-admin-page.php:220
+#, php-format
+msgid "Glossary imported successfully. %d entries imported."
+msgstr ""
+
+#: src/class-admin-page.php:235
+msgid "Please select locales."
+msgstr ""
+
+#: src/class-admin-page.php:236
+msgid "Glossary import failed. GlotPress glossary classes may not be available."
+msgstr ""
+
+#: src/class-admin-page.php:239
+msgid "An error occurred."
+msgstr ""
