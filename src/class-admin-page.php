@@ -7,10 +7,22 @@
 
 namespace GlotCore\ImportGlossaries;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Admin Page class.
  */
 class Admin_Page {
+
+	/**
+	 * Admin page URL.
+	 *
+	 * @var string
+	 */
+	public static $admin_page_url = 'tools.php?page=glotcore-import-glossaries';
 
 	/**
 	 * Constructor.
@@ -158,7 +170,7 @@ class Admin_Page {
 		$locales = array_map( 'sanitize_text_field', $locales );
 
 		if ( empty( $locales ) ) {
-			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'missing_locales', admin_url( 'tools.php?page=glotcore-import-glossaries' ) ) );
+			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'missing_locales', admin_url( self::$admin_page_url ) ) );
 			exit;
 		}
 
@@ -167,7 +179,7 @@ class Admin_Page {
 		// Check for import error.
 		// If any locale returned -1, consider the entire import as failed.
 		if ( in_array( -1, $imported, true ) ) {
-			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'import_failed', admin_url( 'tools.php?page=glotcore-import-glossaries' ) ) );
+			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'import_failed', admin_url( self::$admin_page_url ) ) );
 			exit;
 		}
 
@@ -179,7 +191,7 @@ class Admin_Page {
 					'gc_ig_success'  => 'glossary_imported',
 					'gc_ig_imported' => $import_count,
 				),
-				admin_url( 'tools.php?page=glotcore-import-glossaries' )
+				admin_url( self::$admin_page_url )
 			)
 		);
 		exit;
