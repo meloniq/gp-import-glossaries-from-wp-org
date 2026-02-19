@@ -13,20 +13,6 @@ namespace GlotCore\ImportGlossaries;
 class Admin_Page {
 
 	/**
-	 * Transient prefix for caching.
-	 *
-	 * @var string
-	 */
-	const TRANSIENT_PREFIX = 'gc_ig_glossary_';
-
-	/**
-	 * Cache expiry in seconds (24 hours).
-	 *
-	 * @var int
-	 */
-	const CACHE_EXPIRY = DAY_IN_SECONDS;
-
-	/**
 	 * Constructor.
 	 *
 	 * @return void
@@ -44,7 +30,7 @@ class Admin_Page {
 	 */
 	public function add_menu_page(): void {
 		add_submenu_page(
-			'options-general.php',
+			'tools.php',
 			__( 'GlotCore Import Glossaries', 'glotcore-import-glossaries' ),
 			__( 'GlotCore Import Glossaries', 'glotcore-import-glossaries' ),
 			'manage_options',
@@ -160,7 +146,7 @@ class Admin_Page {
 		$locales = array_map( 'sanitize_text_field', $locales );
 
 		if ( empty( $locales ) ) {
-			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'missing_locales', admin_url( 'options-general.php?page=glotcore-import-glossaries' ) ) );
+			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'missing_locales', admin_url( 'tools.php?page=glotcore-import-glossaries' ) ) );
 			exit;
 		}
 
@@ -169,7 +155,7 @@ class Admin_Page {
 		// Check for import error.
 		// If any locale returned -1, consider the entire import as failed.
 		if ( in_array( -1, $imported, true ) ) {
-			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'import_failed', admin_url( 'options-general.php?page=glotcore-import-glossaries' ) ) );
+			wp_safe_redirect( add_query_arg( 'gc_ig_error', 'import_failed', admin_url( 'tools.php?page=glotcore-import-glossaries' ) ) );
 			exit;
 		}
 
@@ -181,7 +167,7 @@ class Admin_Page {
 					'gc_ig_success'  => 'glossary_imported',
 					'gc_ig_imported' => $import_count,
 				),
-				admin_url( 'options-general.php?page=glotcore-import-glossaries' )
+				admin_url( 'tools.php?page=glotcore-import-glossaries' )
 			)
 		);
 		exit;
@@ -194,7 +180,7 @@ class Admin_Page {
 	 */
 	public function admin_notices(): void {
 		$screen = get_current_screen();
-		if ( ! $screen || 'settings_page_glotcore-import-glossaries' !== $screen->id ) {
+		if ( ! $screen || 'tools_page_glotcore-import-glossaries' !== $screen->id ) {
 			return;
 		}
 

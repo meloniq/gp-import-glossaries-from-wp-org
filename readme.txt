@@ -1,4 +1,4 @@
-=== GlotCore Import Glossaries from wordpress.org ===
+=== GlotCore Import Glossaries ===
 Contributors: meloniq
 Tags: glotpress, import, glossaries, wordpress.org
 Tested up to: 6.9
@@ -16,7 +16,7 @@ With a single click you can now import glossaries that reside on translate.wordp
 
 = Configuration =
 
-Once you have installed GlotCore Import Glossaries from wordpress.org, go to your WordPress admin screen and select "Tools > Import Glossaries from wordpress.org".
+Once you have installed GlotCore Import Glossaries from wordpress.org, go to your WordPress admin screen and select "Tools > GlotCore Import Glossaries from wordpress.org".
 You will be able to select which glossaries to import from a list.
 
 
