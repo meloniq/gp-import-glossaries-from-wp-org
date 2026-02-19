@@ -7,6 +7,11 @@
 
 namespace GlotCore\ImportGlossaries;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use GP;
 use GP_Glossary;
 use GP_Glossary_Entry;
@@ -75,6 +80,19 @@ class Importer {
 	 * @return int Number of entries imported, or -1 on error.
 	 */
 	public static function import_from_wporg( string $locale ): int {
+		global $wp_filesystem;
+
+		// Check if WP Filesystem is available (required for file operations).
+		if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
+			include_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+
+			// If it still isn't available, return an error code.
+			if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
+				return -1;
+			}
+		}
+
 		// Find or create a glossary for this locale.
 		$glossary = self::get_or_create_glossary_for_locale( $locale );
 		if ( ! $glossary ) {
@@ -89,11 +107,11 @@ class Importer {
 
 		// Write to a temp file so we can use fgetcsv like GlotPress does.
 		$tmp_file = wp_tempnam( 'gc_ig_glossary_' );
-		file_put_contents( $tmp_file, $csv_content );
+		$wp_filesystem->put_contents( $tmp_file, $csv_content, FS_CHMOD_FILE );
 
 		$imported = self::import_csv_to_glossary( $tmp_file, $glossary->id, $locale );
 
-		unlink( $tmp_file );
+		wp_delete_file( $tmp_file );
 
 		// Update last import timestamp.
 		$import_times            = get_option( 'gc_ig_glossary_import_times', array() );
@@ -115,19 +133,14 @@ class Importer {
 	 * @return int Number of entries imported.
 	 */
 	protected static function import_csv_to_glossary( string $file, int $glossary_id, string $locale ): int { // phpcs:ignore
-		$f = fopen( $file, 'r' );
-		if ( ! $f ) {
+		global $wp_filesystem;
+
+		$csv_content = $wp_filesystem->get_contents( $file );
+		if ( ! $csv_content ) {
 			return 0;
 		}
 
 		$imported = 0;
-
-		// Read and validate header.
-		$header = fgetcsv( $f, 0, ',', '"', '' );
-		if ( ! is_array( $header ) || count( $header ) < 2 ) {
-			fclose( $f );
-			return 0;
-		}
 
 		// Resolve user ID once. In CLI context get_current_user_id() returns 0.
 		$user_id = get_current_user_id();
@@ -144,23 +157,15 @@ class Importer {
 
 		// WordPress.org CSV header is: en, <locale>, pos, description.
 		// GlotPress validates that header[1] matches locale slug.
-
-		while ( ( $data = fgetcsv( $f, 0, ',', '"', '' ) ) !== false ) {
-			if ( count( $data ) < 4 ) {
-				continue;
-			}
-
-			// Match GlotPress's native logic: if more than 4 columns, splice.
-			if ( count( $data ) > 4 ) {
-				$data = array_splice( $data, 2, -2 );
-			}
+		$entries = self::parse_csv_glossary( $csv_content );
+		foreach ( $entries as $data ) {
 
 			$entry_data = array(
 				'glossary_id'    => $glossary_id,
-				'term'           => $data[0],
-				'translation'    => $data[1],
-				'part_of_speech' => $data[2],
-				'comment'        => $data[3],
+				'term'           => $data['term'],
+				'translation'    => $data['translation'],
+				'part_of_speech' => $data['part_of_speech'],
+				'comment'        => $data['comment'],
 				'last_edited_by' => $user_id,
 			);
 
@@ -182,8 +187,6 @@ class Importer {
 			}
 		}
 
-		fclose( $f );
-
 		return $imported;
 	}
 
@@ -195,14 +198,9 @@ class Importer {
 	 * @return string CSV content or empty string on failure.
 	 */
 	public static function download_wporg_glossary_csv( string $locale ): string {
-		$wporg_locale = self::convert_locale_to_wporg( $locale );
-		if ( empty( $wporg_locale ) ) {
-			return '';
-		}
-
 		$url = sprintf(
 			'https://translate.wordpress.org/locale/%s/default/glossary/-export/',
-			$wporg_locale
+			$locale
 		);
 
 		$response = wp_remote_get(
@@ -283,26 +281,6 @@ class Importer {
 		}
 
 		return array_filter( $entries, fn( $e ) => ! empty( $e['term'] ) );
-	}
-
-	/**
-	 * Convert a GlotPress locale slug to WordPress.org format.
-	 *
-	 * @param string $locale The GlotPress locale slug.
-	 *
-	 * @return string The WordPress.org locale slug.
-	 */
-	protected static function convert_locale_to_wporg( string $locale ): string {
-		$mappings = array(
-			'pt' => 'pt-br',
-			'zh' => 'zh-cn',
-		);
-
-		if ( isset( $mappings[ $locale ] ) ) {
-			return $mappings[ $locale ];
-		}
-
-		return $locale;
 	}
 
 	/**
