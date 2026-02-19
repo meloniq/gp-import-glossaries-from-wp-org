@@ -3,7 +3,7 @@
  * Plugin Name:       GlotCore Import Glossaries
  * Plugin URI:        https://blog.meloniq.net/gp-import-glossaries/
  *
- * Description:       Extends GlotPress by adding functionality to import glossaries from WordPress.org.
+ * Description:       Import glossaries from translate.wordpress.org into your local GlotPress installation.
  * Tags:              glotpress, import, glossaries, wordpress.org
  *
  * Requires at least: 4.9

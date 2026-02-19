@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GlotCore Import Glossaries\n"
-"POT-Creation-Date: 2026-02-19 17:38+0100\n"
+"POT-Creation-Date: 2026-02-19 17:48+0100\n"
 "PO-Revision-Date: 2026-01-31 11:59+0100\n"
 "Last-Translator: MELONIQ.NET\n"
 "Language-Team: MELONIQ.NET\n"
@@ -26,7 +26,7 @@ msgid "GlotCore Import Glossaries from wordpress.org"
 msgstr ""
 
 #: src/class-admin-page.php:76
-msgid "Import Glossaries from WordPress.org"
+msgid "Import Glossaries"
 msgstr ""
 
 #: src/class-admin-page.php:77

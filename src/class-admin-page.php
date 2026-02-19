@@ -73,7 +73,7 @@ class Admin_Page {
 	protected function render_glossary_import_section(): void {
 		$available_locales = Importer::get_supported_locales();
 		?>
-		<h2><?php esc_html_e( 'Import Glossaries from WordPress.org', 'glotcore-import-glossaries' ); ?></h2>
+		<h2><?php esc_html_e( 'Import Glossaries', 'glotcore-import-glossaries' ); ?></h2>
 		<p><?php esc_html_e( 'Import glossaries from translate.wordpress.org for a specific locales.', 'glotcore-import-glossaries' ); ?></p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">

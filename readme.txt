@@ -6,18 +6,28 @@ Stable tag: 1.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Adds functionality to GlotPress to import glossaries from wordpress.org’s translation site.
+Import glossaries from translate.wordpress.org into your local GlotPress installation.
 
 == Description ==
 
-A plugin for [GlotPress](https://wordpress.org/plugins/glotpress/) that imports glossaries from wordpress.org’s translation site.
-With a single click you can now import glossaries that reside on translate.wordpress.org in to your local GlotPress installation!
+GlotCore Import Glossaries extends GlotPress by adding the ability to import glossaries directly from translate.wordpress.org.
+
+With a single click, you can import glossaries that are available on translate.wordpress.org into your local GlotPress installation.
+
+There are more than 200 locales available on translate.wordpress.org, and most of them provide their own glossary.
+This plugin allows you to easily import those glossaries and use them as a reference while translating strings in your local environment.
 
 
 = Configuration =
 
-Once you have installed GlotCore Import Glossaries from wordpress.org, go to your WordPress admin screen and select "Tools > GlotCore Import Glossaries from wordpress.org".
-You will be able to select which glossaries to import from a list.
+After installing and activating GlotCore Import Glossaries from WordPress.org, go to:
+
+Tools → GlotCore Import Glossaries
+
+From there, you can:
+
+- Select specific glossaries to import from a list
+- Import all available glossaries at once
 
 
 == Changelog ==
